@@ -1,60 +1,126 @@
+use std::convert::TryInto;
 
-mod vecs;
-mod objects;
-use vecs::{Color, Point, Ray, Vec3};
-use objects::{LightBlocker, Sphere, Material, Mirror};
+use wasm_bindgen::prelude::*;
+use crate::vecs::{Color, Point, Ray, Vec3};
+use crate::objects::{LightBlocker, Sphere, Material, Mirror};
 
-const IMAGE_WIDTH: usize = 1280;
-const IMAGE_HEIGHT: usize = 720;
-const ASPECT_RATIO: f64 = (IMAGE_WIDTH as f64) / (IMAGE_HEIGHT as f64);
-const SUBSAMPLES:usize = 10;
+const TILESIZE:usize = 20;
 
-fn main() {
-    let focal_length = 1.0;
-    let viewport_height = 2.0;
-    let viewport_width = ASPECT_RATIO * viewport_height;
+#[wasm_bindgen]
+pub extern {
+    fn export_tile(x: u32, y: u32, w:u32, h:u32, ar: &[u8]);
+}
 
-    let mut image = vec![Color::new(); IMAGE_WIDTH*IMAGE_HEIGHT];
-    let w = IMAGE_WIDTH as f64;
-    let h = IMAGE_HEIGHT as f64;
-    let mut spheres: Vec<(Sphere, Mirror)> = Vec::new();
-    spheres.push((Sphere::new(0.0,0.0,1.0,0.5), Mirror{x:0.5,y:0.5,z:0.5}));
-    spheres.push((Sphere::new(0.0,1000.5, 1.0, 1000.0), Mirror{x:0.9,y:0.9,z:0.9}));
-    spheres.push((Sphere::new(-1.0, 0.3,0.0, 0.2), Mirror{x:0.5,y:0.8,z:0.5}));
-    spheres.push((Sphere::new(-1.0, 0.3,2.0, 0.2), Mirror{x:0.5,y:0.8,z:0.5}));
-    spheres.push((Sphere::new(1.0, 0.3,0.0, 0.2), Mirror{x:0.5,y:0.8,z:0.5}));
-    spheres.push((Sphere::new(1.0, 0.3,2.0, 0.2), Mirror{x:0.5,y:0.8,z:0.5}));
-    spheres.push((Sphere::new(1.414, 0.3, 1.0, 0.2), Mirror{x:0.5,y:0.8,z:0.5}));
-    spheres.push((Sphere::new(-1.414, 0.3, 1.0, 0.2), Mirror{x:0.5,y:0.8,z:0.5}));
-    spheres.push((Sphere::new(0.0, 0.3, 2.414, 0.2), Mirror{x:0.5,y:0.8,z:0.5}));
-    spheres.push((Sphere::new(0.0, 0.3, 1.0 - 1.414, 0.2), Mirror{x:0.5,y:0.8,z:0.5}));
-    let mut seed = 0.7;
-    eprint!("Rendering... ");
-    for i in 0..IMAGE_HEIGHT {
-        eprint!("\rRendering... {}/{}", i, IMAGE_HEIGHT);
-        for j in 0..IMAGE_WIDTH {
-            let mut total = Color{x:0.0,y:0.0,z:0.0};
-            for _ in 0..SUBSAMPLES {
-                seed = rand(seed);
-                let r1 = seed;
-                seed = rand(seed);
-                let r2 = seed;
-                let dir = Point{
-                    x:(j as f64 - w/2.0 + r1)*viewport_width/w,
-                    y:(i as f64 - h/2.0 + r2)*viewport_height/h,
-                    z:focal_length
-                };
-                total += ray_color(
-                    Ray::new(Point::new(), dir),
-                    &spheres, 100
-                );
-            }
-            total /= SUBSAMPLES as f64;
-            image[i*IMAGE_WIDTH + j] = total
+// Called when the wasm module is instantiated
+#[wasm_bindgen(start)]
+pub fn main() -> Result<(), JsValue> {
+    Ok(())
+}
+
+
+#[wasm_bindgen]
+pub struct Universe {
+    image_width: usize,
+    image_height: usize,
+    focal_length: f64,
+    viewport_width: f64,
+    viewport_height: f64,
+    image: Vec<Color>,
+    spheres: Vec<(Sphere, Mirror)>,
+}
+
+#[wasm_bindgen]
+impl Universe {
+    pub fn new() -> Universe {
+        let mut spheres: Vec<(Sphere, Mirror)> = Vec::new();
+        spheres.push((Sphere::new(0.0,0.0,1.0,0.5), Mirror{x:0.5,y:0.5,z:0.5}));
+        spheres.push((Sphere::new(0.0,1000.5, 1.0, 1000.0), Mirror{x:0.9,y:0.9,z:0.9}));
+        spheres.push((Sphere::new(-1.0, 0.3,0.0, 0.2), Mirror{x:0.5,y:0.8,z:0.5}));
+        spheres.push((Sphere::new(-1.0, 0.3,2.0, 0.2), Mirror{x:0.5,y:0.8,z:0.5}));
+        spheres.push((Sphere::new(1.0, 0.3,0.0, 0.2), Mirror{x:0.5,y:0.8,z:0.5}));
+        spheres.push((Sphere::new(1.0, 0.3,2.0, 0.2), Mirror{x:0.5,y:0.8,z:0.5}));
+        spheres.push((Sphere::new(1.414, 0.3, 1.0, 0.2), Mirror{x:0.5,y:0.8,z:0.5}));
+        spheres.push((Sphere::new(-1.414, 0.3, 1.0, 0.2), Mirror{x:0.5,y:0.8,z:0.5}));
+        spheres.push((Sphere::new(0.0, 0.3, 2.414, 0.2), Mirror{x:0.5,y:0.8,z:0.5}));
+        spheres.push((Sphere::new(0.0, 0.3, 1.0 - 1.414, 0.2), Mirror{x:0.5,y:0.8,z:0.5}));
+        Universe {
+            image_width: 0,
+            image_height: 0,
+            focal_length: 0.0,
+            viewport_width: 0.0,
+            viewport_height: 0.0,
+            image: Vec::new(),
+            spheres,
         }
     }
-    eprintln!("\rRendering... Done!         ");
-    print_image(&image);
+    
+    pub fn render(&mut self, image_width: usize, image_height: usize) {
+        if image_width == 0 || image_height == 0 {
+            return;
+        }
+        self.image_width = image_width;
+        self.image_height = image_height;
+        self.focal_length = 1.0;
+        self.viewport_height = 2.0;
+        self.viewport_width = (image_width as f64) * self.viewport_height / (image_height as f64);    
+        self.image = vec![Color::new(); image_width*image_height];
+        let mut seed = 0.60653066; //sqrt 1/e
+
+        for b in 0..(image_height-1)/TILESIZE + 1 {
+            for a in 0..(image_width-1)/TILESIZE + 1 {
+                let w = if (a+1)*TILESIZE > image_width {image_width - a*TILESIZE} else {TILESIZE};
+                let h = if (b+1)*TILESIZE > image_height {image_height - b*TILESIZE} else {TILESIZE};
+                self.calculate_tile(&mut seed, a*TILESIZE, b*TILESIZE, w, h);
+                print_tile(a*TILESIZE, b*TILESIZE, w, h, &self.image, image_width)
+            }
+        }
+    }
+}
+
+impl Universe {
+    fn calculate_tile(&mut self, mut seed:&mut f64, x: usize, y: usize, w:usize, h:usize) {
+        let wf = self.image_width as f64;
+        let hf = self.image_height as f64;
+        for i in y..y+h {
+            for j in x..x+w {
+                let mut total = Color{x:0.0, y:0.0, z:0.0};
+                let subsamples = 4;
+                for _ in 0..subsamples {
+                    *seed = rand(*seed);
+                    let r1 = *seed;
+                    *seed = rand(*seed);
+                    let r2 = *seed;
+                    let dir = Point{
+                        x:(j as f64 - wf/2.0 + r1)*self.viewport_width/wf,
+                        y:(i as f64 - hf/2.0 + r2)*self.viewport_height/hf,
+                        z:self.focal_length
+                    };
+                    total += ray_color(
+                        Ray::new(Point::new(), dir),
+                        &self.spheres, 100
+                    );
+                }
+                total /= subsamples as f64;
+                self.image[i*self.image_width + j] = total;
+            }
+        }
+    }
+}
+
+fn print_tile(x: usize, y: usize, w:usize, h:usize, image:&Vec<Color>, image_width:usize) {
+    let mut ar = [0;TILESIZE*TILESIZE*3];
+    for i in 0..h {
+        for j in 0..w {
+            ar[(i*w+j)*3 + 0] = scale(image[(y + i)*image_width + (x + j)].x);
+            ar[(i*w+j)*3 + 1] = scale(image[(y + i)*image_width + (x + j)].y);
+            ar[(i*w+j)*3 + 2] = scale(image[(y + i)*image_width + (x + j)].z);
+        }
+    }
+    export_tile(
+        x.try_into().unwrap(),
+        y.try_into().unwrap(),
+        w.try_into().unwrap(),
+        h.try_into().unwrap(), &ar);
 }
 
 fn rand(prev: f64) -> f64 {
@@ -94,22 +160,6 @@ fn sky_color(mut r:Ray) -> Color {
     r.direction /= r.direction.length();
     let t = 1.0 - 0.5 * r.direction.y;
     Color{x:1.0,y:1.0,z:1.0} * (1.0-t) + Color{x:0.5,y:0.7,z:1.0} * t 
-}
-
-fn print_image(image:&Vec<Color>) {
-    eprint!("Printing... ");
-    let mut outp = format!("P3\n{} {}\n255\n", IMAGE_WIDTH, IMAGE_HEIGHT);
-    for i in 0..IMAGE_HEIGHT {
-        for j in 0..IMAGE_WIDTH {
-            let c = image[i*IMAGE_WIDTH + j];
-            let r:u8 = scale(c.x);
-            let g:u8 = scale(c.y);
-            let b:u8 = scale(c.z);
-            outp.push_str(&format!("{} {} {}\n",r,g,b));
-        }
-    }
-    eprintln!("Done!");
-    print!("{}", outp);
 }
 
 fn scale(n: f64) -> u8 {
