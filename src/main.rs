@@ -8,6 +8,7 @@ const TILESIZE:usize = 20;
 
 #[wasm_bindgen]
 pub extern {
+    fn notify(x: f64);
     fn export_tile(x: u32, y: u32, w:u32, h:u32, ar: &[u8]);
 }
 
@@ -66,18 +67,50 @@ impl Universe {
         self.image = vec![Color::new(); image_width*image_height];
         let mut seed = 0.60653066; //sqrt 1/e
 
-        for b in 0..(image_height-1)/TILESIZE + 1 {
-            for a in 0..(image_width-1)/TILESIZE + 1 {
-                let w = if (a+1)*TILESIZE > image_width {image_width - a*TILESIZE} else {TILESIZE};
-                let h = if (b+1)*TILESIZE > image_height {image_height - b*TILESIZE} else {TILESIZE};
-                self.calculate_tile(&mut seed, a*TILESIZE, b*TILESIZE, w, h);
-                print_tile(a*TILESIZE, b*TILESIZE, w, h, &self.image, image_width)
+        let mut square_side = 1;
+        let mut a = (((image_width-1)/TILESIZE + 1)/2) as isize;
+        let mut b = (((image_height-1)/TILESIZE)/2) as isize;
+        let mut olda = a;
+        while olda >= 0 || b >= 0 {
+            for _ in 0..square_side {
+                self.calculate_and_render(&mut seed, a, b);
+                b += 1;
             }
+            for _ in 0..square_side {
+                self.calculate_and_render(&mut seed, a, b);
+                a -= 1;
+            }
+            for _ in 0..square_side + 1 {
+                self.calculate_and_render(&mut seed, a, b);
+                b -= 1;
+            }
+            olda = a;
+            for _ in 0..square_side + 1 {
+                self.calculate_and_render(&mut seed, a, b);
+                a += 1;
+            }
+            square_side += 2;
         }
+        notify(111111.111);
     }
 }
 
 impl Universe {
+    fn calculate_and_render(&mut self, mut seed:&mut f64, ia:isize, ib:isize) {
+        if ia < 0 || ib < 0 {
+            return;
+        }
+        let a = ia as usize;
+        let b = ib as usize;
+        if a*TILESIZE >= self.image_width || b*TILESIZE >=self.image_height {
+            return;
+        }
+        let w = bounded_tilesize(a, self.image_width);
+        let h = bounded_tilesize(b, self.image_height);
+        self.calculate_tile(&mut seed, a*TILESIZE, b*TILESIZE, w, h);
+        print_tile(a*TILESIZE, b*TILESIZE, w, h, &self.image, self.image_width);
+    }
+
     fn calculate_tile(&mut self, mut seed:&mut f64, x: usize, y: usize, w:usize, h:usize) {
         let wf = self.image_width as f64;
         let hf = self.image_height as f64;
@@ -116,12 +149,24 @@ fn print_tile(x: usize, y: usize, w:usize, h:usize, image:&Vec<Color>, image_wid
             ar[(i*w+j)*3 + 2] = scale(image[(y + i)*image_width + (x + j)].z);
         }
     }
-    export_tile(
-        x.try_into().unwrap(),
-        y.try_into().unwrap(),
-        w.try_into().unwrap(),
-        h.try_into().unwrap(), &ar);
+    unsafe {
+        export_tile(
+            x.try_into().unwrap(),
+            y.try_into().unwrap(),
+            w.try_into().unwrap(),
+            h.try_into().unwrap(), &ar);
+    }
+
 }
+
+fn bounded_tilesize(blocknum:usize, total_len:usize) -> usize {
+    if (blocknum+1)*TILESIZE > total_len {
+        total_len - blocknum*TILESIZE
+    } else {
+        TILESIZE
+    }
+}
+
 
 fn rand(prev: f64) -> f64 {
     (201.7 * prev + 12.3*prev*prev*prev + 0.9) % 1.0

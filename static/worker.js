@@ -19,3 +19,7 @@ function export_tile(x,y,w,h, ar) {
     dst.set(ar);
     postMessage([1,x,y,w,h,dst.buffer], dst.buffer);
 }
+
+function notify(x) {
+    console.log("notified! " + x);
+}
