@@ -1,5 +1,5 @@
-importScripts("/pkg/raytracing.js");
-wasm_bindgen("/pkg/raytracing_bg.wasm").then((wasm) => {
+importScripts("../pkg/raytracing.js");
+wasm_bindgen("../pkg/raytracing_bg.wasm").then((wasm) => {
 
     const { Universe } = wasm_bindgen;
     let unv = Universe.new();
