@@ -6,18 +6,75 @@
       body,html{
         height:100%;
         margin:0;
-        overflow:hidden;
+        overflow-x:hidden;
+        text-align: center;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
       }
-      #textbox{
-        position:absolute;
-        left:0;right:0;top:30px;
-        text-align:center;
+      #canvasWrapper{
+        height:100%;
       }
+      #popupWrapper {
+        position: relative;
+        top: -95%;
+        display: none;
+      }
+      #popupBox {
+        background-color: white;
+        padding: 0.5em;
+        border-radius: 0.3em;
+      }
+      .butt {
+        margin-left: 0.5em;
+      }
+      #contentWrapper{
+        margin-bottom: 5em;
+      }
+      .crow {
+        margin-bottom: 1em;
+      }
+      .selected {
+        background-color: #4eafb9;
+      }
+
     </style>
   </head>
   <body>
-    <canvas id="myCanvas"></canvas>
-    <div id="textbox"></div>
+    <div id="canvasWrapper">
+      <canvas id="myCanvas"></canvas>
+    </div>
+    <div id="popupWrapper">
+      <span id="popupBox">
+        Render finished! 
+        <button class="butt" onclick="scrollToContent()">Customize Scene</button>
+        <button class="butt" onclick="exportPNG()">Export PNG</button>
+        <button class="butt" onclick="hidePopup()">X</button>
+      </span>
+    </div>
+    <div id="contentWrapper">
+      <h1>Customization</h1>
+      <div class="crow" id="skySelector">
+        Sky: 
+        <button class="butt" onclick="selectSky(0)">Day</button>
+        <button class="butt" onclick="selectSky(1)">Night</button>
+        <button class="butt" onclick="selectSky(2)">Laboratory</button>
+      </div>
+      <div class="crow" id="sceneSelector">
+        Objects: 
+        <button class="butt" onclick="selectScene(0)">Summoning Circle</button>
+        <button class="butt" onclick="selectScene(1)">Stack</button>        
+      </div>
+      <div class="crow">
+        Hue 1:
+        <input id="hue1inp" type="color" value="#808080">
+      </div>
+      <div class="crow">
+        Hue 2:
+        <input id="hue2inp" type="color" value="#80CD80">
+      </div>
+      <div class="crow">
+        <button onclick="startRender()">Render!</button>
+      </div>
+    </div>
     <script src="static/content.js"></script>
   </body>
 </html>

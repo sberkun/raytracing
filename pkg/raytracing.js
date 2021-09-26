@@ -19,11 +19,11 @@ let wasm_bindgen;
         return cachedTextDecoder.decode(getUint8Memory0().subarray(ptr, ptr + len));
     }
 
-function notDefined(what) { return () => { throw new Error(`${what} is not defined`); }; }
+    function getArrayU8FromWasm0(ptr, len) {
+        return getUint8Memory0().subarray(ptr / 1, ptr / 1 + len);
+    }
 
-function getArrayU8FromWasm0(ptr, len) {
-    return getUint8Memory0().subarray(ptr / 1, ptr / 1 + len);
-}
+function notDefined(what) { return () => { throw new Error(`${what} is not defined`); }; }
 /**
 */
 __exports.main = function() {
@@ -62,9 +62,17 @@ class Universe {
     /**
     * @param {number} image_width
     * @param {number} image_height
+    * @param {number} skytype
+    * @param {number} scenetype
+    * @param {number} h1x
+    * @param {number} h1y
+    * @param {number} h1z
+    * @param {number} h2x
+    * @param {number} h2y
+    * @param {number} h2z
     */
-    render(image_width, image_height) {
-        wasm.universe_render(this.ptr, image_width, image_height);
+    render(image_width, image_height, skytype, scenetype, h1x, h1y, h1z, h2x, h2y, h2z) {
+        wasm.universe_render(this.ptr, image_width, image_height, skytype, scenetype, h1x, h1y, h1z, h2x, h2y, h2z);
     }
 }
 __exports.Universe = Universe;
@@ -115,7 +123,7 @@ async function init(input) {
     imports.wbg.__wbg_exporttile_3b115765ca21a0da = function(arg0, arg1, arg2, arg3, arg4, arg5) {
         export_tile(arg0 >>> 0, arg1 >>> 0, arg2 >>> 0, arg3 >>> 0, getArrayU8FromWasm0(arg4, arg5));
     };
-    imports.wbg.__wbg_notify_1803c3f1cf95ffff = typeof notify == 'function' ? notify : notDefined('notify');
+    imports.wbg.__wbg_finishrender_14f2ba01ff015c35 = typeof finish_render == 'function' ? finish_render : notDefined('finish_render');
     imports.wbg.__wbindgen_throw = function(arg0, arg1) {
         throw new Error(getStringFromWasm0(arg0, arg1));
     };
