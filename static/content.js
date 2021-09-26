@@ -29,8 +29,8 @@ function worker_message(e) {
 
 }
 
-let skytype = 2;
-let scenetype = 0;
+let skytype;
+let scenetype;
 
 function startRender() {
     hidePopup();

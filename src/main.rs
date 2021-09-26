@@ -115,7 +115,17 @@ impl Universe {
         let mir1= Mirror{x:(h1x as f64)/255.9,y:(h1y as f64)/255.9,z:(h1z as f64)/255.9}; //Mirror{x:0.5,y:0.5,z:0.5}
         let mir2= Mirror{x:(h2x as f64)/255.9,y:(h2y as f64)/255.9,z:(h2z as f64)/255.9}; //Mirror{x:0.5,y:0.8,z:0.5}
         self.spheres.clear();
-        self.spheres.push((Sphere::new(0.0,0.0,1.0,0.5), mir1));
+        self.spheres.push((Sphere::new(-1.0, 0.3, 1.0, 0.2), mir1));
+        self.spheres.push((Sphere::new(1.0, 0.3, 1.0, 0.2), mir1));
+        self.spheres.push((Sphere::new(0.0, 0.3, 2.0, 0.2), mir1));
+        self.spheres.push((Sphere::new(-1.0, -0.1, 1.0, 0.2), mir2));
+        self.spheres.push((Sphere::new(1.0, -0.1, 1.0, 0.2), mir2));
+        self.spheres.push((Sphere::new(0.0, -0.1, 2.0, 0.2), mir2));
+        self.spheres.push((Sphere::new(-1.0, -0.5, 1.0, 0.2), mir2));
+        self.spheres.push((Sphere::new(1.0, -0.5, 1.0, 0.2), mir2));
+        self.spheres.push((Sphere::new(0.0, -0.5, 2.0, 0.2), mir2));
+        
+
         self.spheres.push((Sphere::new(0.0,1000.5, 1.0, 1000.0), Mirror{x:0.9,y:0.9,z:0.9}));
         //TODO: stacked spheres
     }
